@@ -43,8 +43,7 @@ void Level::Begin() {
     
     player = new Player(map->playerPos, 15.0f, 150.0f, 5);
     player->setTileMap(map);
-    
-    // Initialize the enemies
+
     Enemy enemy01(map->enemyPos, 100.0f, 15.0f, 100.0f, 250.0f, 50.0f, 2);
     Enemy enemy02(map->enemyPos2, 100.0f, 15.0f, 100.0f, 250.0f, 50.0f, 2);
     Enemy enemy03(map->enemyPos3, 100.0f, 15.0f, 100.0f, 250.0f, 50.0f, 2);
@@ -58,7 +57,6 @@ void Level::Begin() {
     enemies.push_back(enemy02);
     enemies.push_back(enemy03);
     
-    // Initialize camera
     camera_window = {player->position.x - 150, player->position.y - 150, 300.0f, 300.0f};
     
     camera_view = {0};
@@ -185,9 +183,6 @@ void Level::Draw() {
             }
         }
     }
-    
-    // Draw escape instruction
-    DrawText("Press ESC to return to main menu", 10, WINDOW_HEIGHT - 30, 20, WHITE);
 }
 
 void Level::MoveCamera(Camera2D* cam, Player* player, float delta_time) {
