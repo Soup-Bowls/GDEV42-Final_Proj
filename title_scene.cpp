@@ -49,8 +49,8 @@ void TitleScene::Update() {
 
 void TitleScene::Draw() {
     ClearBackground(BLACK);
-    DrawTexturePro(cavebg, {0, 0, 2000, 2000}, {0,0,800,600}, {0,0},  0.0f,  WHITE);
-    DrawTexturePro(eyeball, {63, 126, 63, 63}, {274, 100, 252, 252}, {0, 0}, 0.0f, WHITE);
-    DrawText("DUNGEON DESCENT", 100, 350, 60, RED);
-    DrawText("Press ENTER", 300, 450, 30, WHITE);
+    DrawTexturePro(cavebg, {0, 0, 2000, 2000}, {0,0,1280,720}, {0,0},  0.0f,  WHITE);
+    DrawTexturePro(eyeball, {63, 126, 63, 63}, {514, 100, 252, 252}, {0, 0}, 0.0f, WHITE);
+    DrawText("DUNGEON DESCENT", 350, 350, 60, RED);
+    DrawText("Press ENTER", 550, 450, 30, WHITE);
 }

@@ -54,7 +54,7 @@ int main() {
     scene_manager.RegisterScene(&leaderboard_scene, 5);
     scene_manager.RegisterScene(&level_scene, 6);
 
-    scene_manager.SwitchScene(6);
+    scene_manager.SwitchScene(0);
 
     while(!WindowShouldClose()) {
         Scene* active_scene = scene_manager.GetActiveScene();

@@ -39,7 +39,7 @@ void MainMenu::InitializeButtons() {
     
     // Start Button
     buttons.push_back(new MenuButton(
-        {300, 200, 200, 50},
+        {570, 250, 200, 50},
         "Start",
         RED, 
         MAROON, 
@@ -57,7 +57,7 @@ void MainMenu::InitializeButtons() {
 
     // Settings Button
     buttons.push_back(new MenuButton(
-        {300, 275, 200, 50},
+        {570, 325, 200, 50},
         "Settings", 
         RED, 
         MAROON, 
@@ -75,7 +75,7 @@ void MainMenu::InitializeButtons() {
 
     // Achievements Button
     buttons.push_back(new MenuButton(
-        {300, 350, 200, 50},
+        {570, 400, 200, 50},
         "Leaderboards", 
         RED, 
         MAROON, 
@@ -93,7 +93,7 @@ void MainMenu::InitializeButtons() {
 
     // Exit Button
     buttons.push_back(new MenuButton(
-        {300, 425, 200, 50},
+        {570, 475, 200, 50},
         "Exit Game", 
         RED, 
         MAROON, 
@@ -180,9 +180,9 @@ void MenuButton::Draw()
 
 void MainMenu::Draw() {
     ClearBackground(DARKGRAY);
-    DrawTexturePro(backgroundTexture, {0, 0, 2000, 2000}, {0,0,800,600}, {0,0},  0.0f,  WHITE);
+    DrawTexturePro(backgroundTexture, {0, 0, 2000, 2000}, {0,0,1280,720}, {0,0},  0.0f,  WHITE);
 
-    DrawText("MAIN MENU", 220, 100, 60, WHITE);
+    DrawText("MAIN MENU", 450, 100, 80, WHITE);
 
     for (const auto& button : buttons) {
         button->Draw();

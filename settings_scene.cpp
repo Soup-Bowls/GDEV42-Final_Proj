@@ -104,7 +104,7 @@ void SettingsScene::InitializeUI() {
 
     // Master Volume Slider
     masterVolumeSlider = new VolumeSlider(
-        {250, 200, 300, 20}, 
+        {500, 200, 300, 20}, 
         "Master Volume", 
         0.5f  // Default value
     );
@@ -112,7 +112,7 @@ void SettingsScene::InitializeUI() {
 
     // Music Volume Slider
     musicVolumeSlider = new VolumeSlider(
-        {250, 300, 300, 20}, 
+        {500, 300, 300, 20}, 
         "Music Volume", 
         0.5f  // Default value, can be expanded to track music volume separately
     );
@@ -120,7 +120,7 @@ void SettingsScene::InitializeUI() {
 
     // SFX Volume Slider
     sfxVolumeSlider = new VolumeSlider(
-        {250, 400, 300, 20}, 
+        {500, 400, 300, 20}, 
         "SFX Volume", 
         0.5f  // Default value, can be expanded to track SFX volume separately
     );
@@ -130,7 +130,7 @@ void SettingsScene::InitializeUI() {
 
     // Back to Menu Button
     buttons.push_back(new MenuButton(
-        {300, 500, 200, 50},
+        {500, 500, 200, 50},
         "Back to Menu", 
         RED, 
         MAROON, 
@@ -224,10 +224,10 @@ void SettingsScene::Draw() {
     ClearBackground(DARKGRAY);
     
     // Draw background
-    DrawTexturePro(settingsBackground, {0, 0, 2000, 2000}, {0,0,800,600}, {0,0},  0.0f,  WHITE);
+    DrawTexturePro(settingsBackground, {0, 0, 2000, 2000}, {0,0,1280,720}, {0,0},  0.0f,  WHITE);
 
     // Draw title
-    DrawText("SETTINGS", 250, 100, 50, WHITE);
+    DrawText("SETTINGS", 520, 100, 50, WHITE);
 
     // Draw all UI elements (sliders and buttons)
     for (const auto& element : uiElements) {
