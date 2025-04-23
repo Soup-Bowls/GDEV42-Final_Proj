@@ -5,6 +5,11 @@
 #include <iostream>
 #include <fstream>
 
+struct SaveData {
+    int wave;
+    int playerHealth;
+};
+
 class SaveSystem {
 public:
     static SaveSystem* GetInstance() {
@@ -12,41 +17,36 @@ public:
         return &instance;
     }
 
-    bool SaveWave(int wave) {
+    bool SaveGame(int wave, int playerHealth) {
         try {
             std::ofstream saveFile("savegame.txt");
             if (saveFile.is_open()) {
-                saveFile << wave;
+                saveFile << wave << " " << playerHealth;
                 saveFile.close();
-                std::cout << "Saved wave: " << wave << std::endl;
+                std::cout << "Saved wave: " << wave << " with health: " << playerHealth << std::endl;
                 return true;
             } else {
-                std::cerr << "Unable to open save file for writing" << std::endl;
                 return false;
             }
         } catch (const std::exception& e) {
-            std::cerr << "Error saving wave: " << e.what() << std::endl;
             return false;
         }
     }
 
-    int LoadWave() {
-        try {
-            std::ifstream saveFile("savegame.txt");
-            if (saveFile.is_open()) {
-                int wave = 1;  // Default to wave 1 if reading fails
-                saveFile >> wave;
-                saveFile.close();
-                std::cout << "Loaded wave: " << wave << std::endl;
-                return wave;
-            } else {
-                std::cout << "No save file found, starting from wave 1" << std::endl;
-                return 1;  // Default to wave 1 if no save file exists
-            }
-        } catch (const std::exception& e) {
-            std::cerr << "Error loading wave: " << e.what() << std::endl;
-            return 1;  // Default to wave 1 on error
+    SaveData LoadGame() {
+        SaveData data = {1, 100}; // Default: wave 1, full health
+        
+
+        std::ifstream saveFile("savegame.txt");
+        if (saveFile.is_open()) {
+            saveFile >> data.wave >> data.playerHealth;
+            saveFile.close();
+            std::cout << "Loaded wave: " << data.wave << " with health: " << data.playerHealth << std::endl;
+        } else {
+            std::cout << "No save file found" << std::endl;
         }
+        
+        return data;
     }
 
     bool HasSaveFile() {
@@ -55,7 +55,7 @@ public:
     }
 
 private:
-    SaveSystem() {}  // Private constructor for singleton
+    SaveSystem() {}
     SaveSystem(const SaveSystem&) = delete;
     void operator=(const SaveSystem&) = delete;
 };

@@ -16,6 +16,7 @@ class Level : public Scene {
 public:
     Level();
     Level(int starting_wave);
+    Level(int starting_wave, int starting_health);
     ~Level();
 
     void Begin() override;
@@ -27,7 +28,7 @@ private:
     // Game state
     bool game_ongoing;
     bool is_paused;
-    bool should_exit_to_menu; //pause flag
+    bool should_exit_to_menu;
     
     // Camera
     Camera2D camera_view;
@@ -41,6 +42,7 @@ private:
     
     // Wave system
     int current_wave;
+    int starting_player_health;
     int base_wave_points;
     float wave_timer;
     float wave_delay;
@@ -56,7 +58,6 @@ private:
     bool continue_hover;
     bool main_menu_hover;
 
-    // Helper methods
     void MoveCamera(float delta_time);
     void SpawnWave(int wave_num);
     void CheckWaveStatus();

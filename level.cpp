@@ -6,13 +6,13 @@
 #include <string>
 
 #include "level-h.hpp"
-#include "SaveSystem.hpp"
 #include "PlayerStateMachine.cpp"
 #include "BeeStateMachine.cpp"
 #include "slimeStateMachine.cpp"
 #include "GhostStateMachine.cpp"
 #include "projectile.cpp"
 #include "TileMap.cpp"
+#include "SaveSystem.hpp"
 
 #define GAME_SCENE_MUSIC "Assets/Audio/Music/symphony.ogg"
 
@@ -20,11 +20,12 @@ const int WINDOW_WIDTH(1280);
 const int WINDOW_HEIGHT(720);
 const float FPS(60.0f);
 
-Level::Level(int starting_wave) : 
+Level::Level(int starting_wave, int starting_health) : 
     game_ongoing(true),
     is_paused(false),
     cam_drift(2.0f),
     current_wave(starting_wave),
+    starting_player_health(starting_health),
     base_wave_points(5),
     wave_timer(0.0f),
     wave_delay(2.0f),
@@ -35,17 +36,18 @@ Level::Level(int starting_wave) :
     main_menu_hover(false),
     should_exit_to_menu(false)
 {
-    // Initialize camera
     camera_view = {0};
     camera_view.offset = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2};
     camera_view.zoom = 2.0f;
     
-    // Initialize pause menu buttons
     continue_button = { WINDOW_WIDTH/2 - 100, WINDOW_HEIGHT/2 - 60, 200, 50 };
     main_menu_button = { WINDOW_WIDTH/2 - 100, WINDOW_HEIGHT/2 + 10, 200, 50 };
 }
 
-Level::Level() : Level(1) {
+Level::Level(int starting_wave) : Level(starting_wave, 100) {
+}
+
+Level::Level() : Level(1, 100) {
 }
 
 Level::~Level() {
@@ -53,26 +55,20 @@ Level::~Level() {
 }
 
 void Level::Begin() {
-    // Initialize map
     map.LoadTilemapData("TileInfo.txt");
     
-    // Initialize player
     if (player) delete player;
-    player = new Player(map.playerPos, 15.0f, 150.0f, 100);
+    player = new Player(map.playerPos, 15.0f, 150.0f, starting_player_health);
     player->setTileMap(&map);
     
-    // Set camera focus on player
     camera_view.target = player->position;
     camera_window = {player->position.x - 150, player->position.y - 150, 300.0f, 300.0f};
     
-    // Initialize enemies
     SpawnWave(current_wave);
     
-    // Load music
     std::cout << "Attempting to load game music" << std::endl;
     game_music = LoadMusicStream(GAME_SCENE_MUSIC);
     
-    // Extensive music loading checks
     if (game_music.ctxData != nullptr) {
         std::cout << "Music loaded successfully" << std::endl;
         music_loaded = true;
@@ -82,66 +78,39 @@ void Level::Begin() {
         std::cerr << "Failed to load game music at path: " << GAME_SCENE_MUSIC << std::endl;
         music_loaded = false;
     }
-    // Reset game state
+    
     game_ongoing = true;
+    
+    SaveSystem::GetInstance()->SaveGame(current_wave, player->health);
 }
 
 void Level::End() {
     std::cout << "Level::End() - Starting cleanup" << std::endl;
 
-    // Clean up enemies with additional safety checks
-    std::cout << "Cleaning up enemies. Current enemy count: " << enemies.size() << std::endl;
-    try {
-        for (auto* e : enemies) {
-            if (e != nullptr) {
-                std::cout << "Deleting enemy" << std::endl;
-                delete e;
-            } else {
-                std::cout << "Encountered null enemy pointer" << std::endl;
-            }
-        }
-        enemies.clear();
-        std::cout << "Enemies cleaned up successfully" << std::endl;
-    } catch (const std::exception& e) {
-        std::cerr << "Error cleaning up enemies: " << e.what() << std::endl;
-    }
-    
-    // Clean up player with additional safety checks
-    try {
-        if (player) {
-            std::cout << "Deleting player" << std::endl;
-            delete player;
-            player = nullptr;
+    for (auto* e : enemies) {
+        if (e != nullptr) {
+            delete e;
         } else {
-            std::cout << "Player was already null" << std::endl;
         }
-    } catch (const std::exception& e) {
-        std::cerr << "Error cleaning up player: " << e.what() << std::endl;
     }
+    enemies.clear();
     
-    // Music cleanup with more detailed checks
-    try {
-        std::cout << "Music loaded status: " << (music_loaded ? "True" : "False") << std::endl;
-        std::cout << "Music context data: " << (game_music.ctxData != nullptr ? "Not Null" : "Null") << std::endl;
+    if (player) {
+        delete player;
+        player = nullptr;
+    }
+       
+    if (music_loaded && game_music.ctxData != nullptr) {
+        StopMusicStream(game_music);
+        UnloadMusicStream(game_music);
         
-        if (music_loaded && game_music.ctxData != nullptr) {
-            std::cout << "Attempting to stop and unload game music" << std::endl;
-            StopMusicStream(game_music);
-            UnloadMusicStream(game_music);
-            
-            // Explicitly reset music data
-            game_music.ctxData = nullptr;
-            game_music.stream = {0};
-            game_music.frameCount = 0;
-            
-            music_loaded = false;
-            std::cout << "Music unloaded successfully" << std::endl;
-        } else {
-            std::cout << "Skipping music unload - not loaded or invalid" << std::endl;
-        }
-    } catch (const std::exception& e) {
-        std::cerr << "Error cleaning up music: " << e.what() << std::endl;
+        game_music.ctxData = nullptr;
+        game_music.stream = {0};
+        game_music.frameCount = 0;
+        
+        music_loaded = false;
     }
+
 
     std::cout << "Level::End() - Cleanup completed" << std::endl;
 }
@@ -241,6 +210,10 @@ void Level::CheckWaveStatus() {
             current_wave++;
             SpawnWave(current_wave);
             wave_timer = 0.0f;
+            
+            // Save the current wave and player health when a new wave starts
+            SaveSystem::GetInstance()->SaveGame(current_wave, player->health);
+            std::cout << "Wave " << current_wave << " started - saved game with health " << player->health << std::endl;
         }
     }
 }
@@ -257,6 +230,9 @@ void Level::HandleCollisions() {
 void Level::CheckGameStatus() {
     if (player->health <= 0) {
         game_ongoing = false;
+        
+        SaveSystem::GetInstance()->SaveGame(1, 100);
+        
         SceneManager* sceneManager = GetSceneManager();
         if (sceneManager) {
             sceneManager->SwitchScene(4); // Death scene
@@ -267,17 +243,15 @@ void Level::CheckGameStatus() {
 void Level::HandlePauseMenu() {
     Vector2 mouse_pos = GetMousePosition();
     
-    // Check button hover states
     continue_hover = CheckCollisionPointRec(mouse_pos, continue_button);
     main_menu_hover = CheckCollisionPointRec(mouse_pos, main_menu_button);
     
-    // Handle button clicks
     if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
         if (continue_hover) {
             is_paused = false;
         } else if (main_menu_hover) {
             is_paused = false;
-            should_exit_to_menu = true; // Flag for transition in main update loop
+            should_exit_to_menu = true;
         }
     }
 }
@@ -285,12 +259,10 @@ void Level::HandlePauseMenu() {
 void Level::Update() {
     float delta_time = GetFrameTime();
     
-    // Check for pause toggle
     if (IsKeyPressed(KEY_P)) {
         is_paused = !is_paused;
     }
     
-    // Update music regardless of pause state
     if (music_loaded && IsMusicReady(game_music)) {
         UpdateMusicStream(game_music);
         if (!IsMusicStreamPlaying(game_music)) {
@@ -299,62 +271,47 @@ void Level::Update() {
     }
 
     if (is_paused) {
-        // Handle pause menu interaction
         HandlePauseMenu();
-        return; // Skip the rest of the updates when paused
+        return; 
     }
 
     if (game_ongoing) {
-        // Update player
         player->Update(delta_time);
         
-        // Update enemies
         for (auto* enemy : enemies) {
             if (enemy->active) {
                 enemy->Update(delta_time);
             }
         }
         
-        // Handle collisions
         HandleCollisions();
         
-        // Check wave status
         CheckWaveStatus();
         
-        // Check game status
         CheckGameStatus();
-        
-        // Update camera
+
         MoveCamera(delta_time);
     }
-
+    
     if (should_exit_to_menu) {
-        should_exit_to_menu = false; // Reset flag
-        game_ongoing = false; // Similar to player death
-
-        // Save the current wave before exiting
-        SaveSystem::GetInstance()->SaveWave(current_wave);
+        should_exit_to_menu = false; 
+        game_ongoing = false;
+        
+        SaveData currentSave = SaveSystem::GetInstance()->LoadGame();
+        SaveSystem::GetInstance()->SaveGame(current_wave, currentSave.playerHealth); //Save wave, not health
         
         SceneManager* sceneManager = GetSceneManager();
         if (sceneManager) {
             sceneManager->SwitchScene(1); // Main menu
         }
     }
-    
-    // Check for exit
-    if (IsKeyPressed(KEY_ESCAPE)) {
-        is_paused = true; // Pause instead of directly exiting
-    }
 }
 
 void Level::DrawPauseMenu() {
-    // Draw semi-transparent overlay
     DrawRectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, Fade(WHITE, 0.7f));
     
-    // Draw pause title
     DrawText("PAUSED", WINDOW_WIDTH/2 - MeasureText("PAUSED", 60)/2, WINDOW_HEIGHT/2 - 150, 60, MAROON);
     
-    // Draw continue button
     Color continue_color = continue_hover ? MAROON : RED;
     DrawRectangleRec(continue_button, continue_color);
     DrawRectangleLinesEx(continue_button, 2, MAROON);
@@ -363,7 +320,6 @@ void Level::DrawPauseMenu() {
              continue_button.y + continue_button.height/2 - 10, 
              20, WHITE);
     
-    // Draw main menu button
     Color menu_color = main_menu_hover ? MAROON : RED;
     DrawRectangleRec(main_menu_button, menu_color);
     DrawRectangleLinesEx(main_menu_button, 2, MAROON);
@@ -379,13 +335,10 @@ void Level::Draw() {
     if (game_ongoing) {
         BeginMode2D(camera_view);
 
-        // Draw world
         map.DrawTilemap();
         
-        // Draw player
         player->Draw();
         
-        // Draw enemies
         for (auto* enemy : enemies) {
             if (enemy->active) {
                 enemy->Draw();
@@ -394,15 +347,12 @@ void Level::Draw() {
         
         EndMode2D();
         
-        // Draw UI elements
         DrawText(TextFormat("Health: %d", player->health), 10, 10, 30, WHITE);
         DrawText(TextFormat("Wave: %d", current_wave), 10, 50, 30, YELLOW);
         DrawText(TextFormat("Position: %.0f %.0f", player->position.x, player->position.y), 10, 80, 30, YELLOW);
         
-        // Draw pause indicator
         DrawText("Press P to pause", WINDOW_WIDTH - 200, 10, 20, WHITE);
         
-        // Draw pause menu if game is paused
         if (is_paused) {
             DrawPauseMenu();
         }

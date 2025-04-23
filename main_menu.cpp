@@ -3,7 +3,6 @@
 #include "SaveSystem.hpp"
 #include <iostream>
 
-// MenuButton constructor implementation
 MenuButton::MenuButton(Rectangle bounds, const char* text, Color normalColor, 
                        Color hoverColor, Color textColor, 
                        std::function<void()> action)
@@ -38,10 +37,8 @@ void MainMenu::InitializeButtons() {
     }
     buttons.clear();
     
-    // Check if save file exists
     bool has_save = SaveSystem::GetInstance()->HasSaveFile();
     
-    // If save exists, add Continue button
     if (has_save) {
         buttons.push_back(new MenuButton(
             {570, 250, 200, 50},
@@ -52,25 +49,21 @@ void MainMenu::InitializeButtons() {
             [this]() { 
                 SceneManager* sceneManager = GetSceneManager();
                 if (sceneManager != nullptr) {
-                    // Load saved wave
-                    int saved_wave = SaveSystem::GetInstance()->LoadWave();
+                    SaveData saveData = SaveSystem::GetInstance()->LoadGame();
                     
-                    // Create a Level scene with the saved wave
-                    Level* level_scene = new Level(saved_wave);
+                    Level* level_scene = new Level(saveData.wave, saveData.playerHealth);
                     level_scene->SetSceneManager(sceneManager);
                     
-                    // Register this new level scene
-                    sceneManager->UnregisterScene(6); // Remove old level scene
-                    sceneManager->RegisterScene(level_scene, 6); // Add new one
+                    sceneManager->UnregisterScene(6);
+                    sceneManager->RegisterScene(level_scene, 6);
                     
-                    std::cout << "Continuing from wave " << saved_wave << std::endl;
+                    std::cout << "Continuing from wave " << saveData.wave << " with health " << saveData.playerHealth << std::endl;
                     sceneManager->SwitchScene(6);
                     sceneManager->CancelExit();
                 }
             }
         ));
         
-        // New Game button
         buttons.push_back(new MenuButton(
             {570, 325, 200, 50},
             "New Game",
@@ -80,13 +73,11 @@ void MainMenu::InitializeButtons() {
             [this]() { 
                 SceneManager* sceneManager = GetSceneManager();
                 if (sceneManager != nullptr) {
-                    // Create a Level scene with wave 1
                     Level* level_scene = new Level(1);
                     level_scene->SetSceneManager(sceneManager);
                     
-                    // Register this new level scene
-                    sceneManager->UnregisterScene(6); // Remove old level scene
-                    sceneManager->RegisterScene(level_scene, 6); // Add new one
+                    sceneManager->UnregisterScene(6);
+                    sceneManager->RegisterScene(level_scene, 6);
                     
                     std::cout << "Starting new game at wave 1" << std::endl;
                     sceneManager->SwitchScene(6);
@@ -95,7 +86,6 @@ void MainMenu::InitializeButtons() {
             }
         ));
         
-        // Add remaining buttons with shifted positions
         buttons.push_back(new MenuButton(
             {570, 400, 200, 50},
             "Settings", 
@@ -211,7 +201,6 @@ void MainMenu::InitializeButtons() {
 void MainMenu::Begin() {
     std::cout << "MainMenu::Begin() starting" << std::endl;
     
-    // Make sure buttons are initialized
     if (buttons.empty()) {
         InitializeButtons();
     }
