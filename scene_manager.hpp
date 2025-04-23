@@ -16,6 +16,7 @@ class Scene {
     // and set this via the constructor.
 protected:
     SceneManager* scene_manager = nullptr;
+    
 
 public:
     // Begins the scene. This is where you can load resources
