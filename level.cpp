@@ -203,9 +203,28 @@ void Level::HandleCollisions() {
 void Level::CheckGameStatus() {
     if (player->health <= 0) {
         game_ongoing = false;
+        
+        // Calculate final score (based on waves completed, enemies defeated, etc.)
+        int finalScore = current_wave * 100; // Example score calculation
+        
         SceneManager* sceneManager = GetSceneManager();
         if (sceneManager) {
-            sceneManager->SwitchScene(4); // Death scene
+            // Check if this is a high score
+            HighScoreManager highScoreManager;
+            if (highScoreManager.IsHighScore(finalScore)) {
+                // Get name entry scene and set the score
+                NameEntryScene* nameEntryScene = 
+                    dynamic_cast<NameEntryScene*>(sceneManager->GetSceneByID(7));
+                
+                if (nameEntryScene) {
+                    nameEntryScene->SetPlayerScore(finalScore);
+                    sceneManager->SwitchScene(7);
+                } else {
+                    sceneManager->SwitchScene(4); // Death scene
+                }
+            } else {
+                sceneManager->SwitchScene(4); // Death scene
+            }
         }
     }
 }
