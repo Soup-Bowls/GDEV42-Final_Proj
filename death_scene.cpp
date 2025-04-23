@@ -51,7 +51,7 @@ void DeathScene::Update() {
 
 void DeathScene::Draw() {
     ClearBackground(BLACK);
-    DrawTexturePro(deathbg, {0, 0, 2000, 2000}, {0,0,800,600}, {0,0},  0.0f,  BLUE);
-    DrawText("YOU DIED", 250, 250, 60, RED);
-    DrawText("Press ENTER to return", 30, 550, 20, WHITE);
+    DrawTexturePro(deathbg, {0, 0, 2000, 2000}, {0,0,1280,720}, {0,0},  0.0f,  BLUE);
+    DrawText("YOU DIED", 500, 270, 60, RED);
+    DrawText("Press ENTER to return", 30, 670, 20, WHITE);
 }

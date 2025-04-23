@@ -6,6 +6,7 @@
 #include <string>
 
 #include "level-h.hpp"
+#include "SaveSystem.hpp"
 #include "PlayerStateMachine.cpp"
 #include "BeeStateMachine.cpp"
 #include "slimeStateMachine.cpp"
@@ -19,11 +20,11 @@ const int WINDOW_WIDTH(1280);
 const int WINDOW_HEIGHT(720);
 const float FPS(60.0f);
 
-Level::Level() : 
+Level::Level(int starting_wave) : 
     game_ongoing(true),
     is_paused(false),
     cam_drift(2.0f),
-    current_wave(1),
+    current_wave(starting_wave),
     base_wave_points(5),
     wave_timer(0.0f),
     wave_delay(2.0f),
@@ -31,7 +32,8 @@ Level::Level() :
     player(nullptr),
     music_loaded(false),
     continue_hover(false),
-    main_menu_hover(false)
+    main_menu_hover(false),
+    should_exit_to_menu(false)
 {
     // Initialize camera
     camera_view = {0};
@@ -41,6 +43,9 @@ Level::Level() :
     // Initialize pause menu buttons
     continue_button = { WINDOW_WIDTH/2 - 100, WINDOW_HEIGHT/2 - 60, 200, 50 };
     main_menu_button = { WINDOW_WIDTH/2 - 100, WINDOW_HEIGHT/2 + 10, 200, 50 };
+}
+
+Level::Level() : Level(1) {
 }
 
 Level::~Level() {
@@ -64,39 +69,81 @@ void Level::Begin() {
     SpawnWave(current_wave);
     
     // Load music
+    std::cout << "Attempting to load game music" << std::endl;
     game_music = LoadMusicStream(GAME_SCENE_MUSIC);
-    if (IsMusicReady(game_music)) {
+    
+    // Extensive music loading checks
+    if (game_music.ctxData != nullptr) {
+        std::cout << "Music loaded successfully" << std::endl;
         music_loaded = true;
         AudioManager::GetInstance()->SetCurrentMusic(game_music);
         PlayMusicStream(game_music);
     } else {
-        std::cerr << "Failed to load game music" << std::endl;
+        std::cerr << "Failed to load game music at path: " << GAME_SCENE_MUSIC << std::endl;
+        music_loaded = false;
     }
-    
     // Reset game state
     game_ongoing = true;
 }
 
 void Level::End() {
-    // Clean up enemies
-    for (auto* e : enemies) {
-        delete e;
+    std::cout << "Level::End() - Starting cleanup" << std::endl;
+
+    // Clean up enemies with additional safety checks
+    std::cout << "Cleaning up enemies. Current enemy count: " << enemies.size() << std::endl;
+    try {
+        for (auto* e : enemies) {
+            if (e != nullptr) {
+                std::cout << "Deleting enemy" << std::endl;
+                delete e;
+            } else {
+                std::cout << "Encountered null enemy pointer" << std::endl;
+            }
+        }
+        enemies.clear();
+        std::cout << "Enemies cleaned up successfully" << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Error cleaning up enemies: " << e.what() << std::endl;
     }
-    enemies.clear();
     
-    // Clean up player
-    if (player) {
-        delete player;
-        player = nullptr;
+    // Clean up player with additional safety checks
+    try {
+        if (player) {
+            std::cout << "Deleting player" << std::endl;
+            delete player;
+            player = nullptr;
+        } else {
+            std::cout << "Player was already null" << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error cleaning up player: " << e.what() << std::endl;
     }
     
-    // Unload music
-    if (IsMusicReady(game_music)) {
-        StopMusicStream(game_music);
-        UnloadMusicStream(game_music);
-        game_music = {0};
-        music_loaded = false;
+    // Music cleanup with more detailed checks
+    try {
+        std::cout << "Music loaded status: " << (music_loaded ? "True" : "False") << std::endl;
+        std::cout << "Music context data: " << (game_music.ctxData != nullptr ? "Not Null" : "Null") << std::endl;
+        
+        if (music_loaded && game_music.ctxData != nullptr) {
+            std::cout << "Attempting to stop and unload game music" << std::endl;
+            StopMusicStream(game_music);
+            UnloadMusicStream(game_music);
+            
+            // Explicitly reset music data
+            game_music.ctxData = nullptr;
+            game_music.stream = {0};
+            game_music.frameCount = 0;
+            
+            music_loaded = false;
+            std::cout << "Music unloaded successfully" << std::endl;
+        } else {
+            std::cout << "Skipping music unload - not loaded or invalid" << std::endl;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error cleaning up music: " << e.what() << std::endl;
     }
+
+    std::cout << "Level::End() - Cleanup completed" << std::endl;
 }
 
 void Level::MoveCamera(float delta_time) {
@@ -229,10 +276,8 @@ void Level::HandlePauseMenu() {
         if (continue_hover) {
             is_paused = false;
         } else if (main_menu_hover) {
-            SceneManager* sceneManager = GetSceneManager();
-            if (sceneManager) {
-                sceneManager->SwitchScene(1); // Main menu scene
-            }
+            is_paused = false;
+            should_exit_to_menu = true; // Flag for transition in main update loop
         }
     }
 }
@@ -281,6 +326,19 @@ void Level::Update() {
         
         // Update camera
         MoveCamera(delta_time);
+    }
+
+    if (should_exit_to_menu) {
+        should_exit_to_menu = false; // Reset flag
+        game_ongoing = false; // Similar to player death
+
+        // Save the current wave before exiting
+        SaveSystem::GetInstance()->SaveWave(current_wave);
+        
+        SceneManager* sceneManager = GetSceneManager();
+        if (sceneManager) {
+            sceneManager->SwitchScene(1); // Main menu
+        }
     }
     
     // Check for exit

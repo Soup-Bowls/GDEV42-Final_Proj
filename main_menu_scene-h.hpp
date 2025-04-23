@@ -5,6 +5,7 @@
 #include <vector>
 #include <functional>
 #include "scene_manager.hpp"
+#include "level-h.hpp"
 
 // Forward declaration
 class MenuButton;

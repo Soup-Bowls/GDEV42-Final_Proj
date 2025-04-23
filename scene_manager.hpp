@@ -61,24 +61,48 @@ public:
 
     // Switches to the scene identified by the specified scene ID.
     void SwitchScene(int scene_id) {
-        // If the scene ID does not exist in our records,
-        // don't do anything (or you can print an error message).
-        if (scenes.find(scene_id) == scenes.end()) {
-            std::cout << "Scene ID not found" << std::endl;
-            return;
-        }
+    // Extensive logging and error checking
+    std::cout << "Attempting to switch to scene: " << scene_id << std::endl;
 
+    // If the scene ID does not exist in our records,
+    // don't do anything (or you can print an error message).
+    if (scenes.find(scene_id) == scenes.end()) {
+        std::cerr << "ERROR: Scene ID " << scene_id << " not found" << std::endl;
+        return;
+    }
+
+    try {
         // If there is already an active scene, end it first
         if (active_scene != nullptr) {
+            std::cout << "Ending current active scene" << std::endl;
             active_scene->End();
         }
 
-        std::cout << "Moved to Scene " << scene_id << std::endl;
+        // Retrieve the new scene
+        Scene* new_scene = scenes[scene_id];
+        if (new_scene == nullptr) {
+            std::cerr << "ERROR: Retrieved scene is null for ID " << scene_id << std::endl;
+            return;
+        }
 
-        active_scene = scenes[scene_id];
+        std::cout << "Setting new active scene" << std::endl;
+        active_scene = new_scene;
 
+        std::cout << "Beginning new scene" << std::endl;
         active_scene->Begin();
+
+        std::cout << "Successfully switched to scene " << scene_id << std::endl;
+    } 
+    catch (const std::exception& e) {
+        std::cerr << "CRITICAL ERROR during scene switch: " << e.what() << std::endl;
+        // Potentially set a default scene or handle the error
+        active_scene = nullptr;
     }
+    catch (...) {
+        std::cerr << "UNKNOWN ERROR during scene switch" << std::endl;
+        active_scene = nullptr;
+    }
+}
 
     // Gets the active scene
     Scene* GetActiveScene() {
@@ -129,32 +153,53 @@ public:
     }
 
     TextureData GetTexture(const std::string& path) {
-        // Check if the texture is already loaded
-        if (textures.find(path) != textures.end()) {
-            std::cout << "Resource Already Loaded" << path << std::endl;
-            textureReferences[path]++;
-            return textures[path]; 
+        try {
+            // Check if the texture is already loaded
+            if (textures.find(path) != textures.end()) {
+                std::cout << "Resource Already Loaded: " << path << std::endl;
+                textureReferences[path]++;
+                return textures[path]; 
+            }
+    
+            std::cout << "Attempting to load texture: " << path << std::endl;
+            
+            // Check if file exists first
+            if (!FileExists(path.c_str())) {
+                std::cerr << "ERROR: Texture file does not exist: " << path << std::endl;
+                TextureData emptyData = {0};
+                return emptyData;
+            }
+    
+            // Load the texture
+            Texture texture = LoadTexture(path.c_str());
+    
+            // Error handling
+            if (texture.id == 0) {
+                std::cerr << "Failed to load texture " << path << std::endl;
+                TextureData emptyData = {0};
+                return emptyData;
+            }
+    
+            std::cout << "Loaded " << path << " from Disk" << std::endl;
+            TextureData textureData;
+            textureData.texture = texture;
+            textureData.width = texture.width;
+            textureData.height = texture.height;
+            
+            textures[path] = textureData;
+            textureReferences[path] = 1;
+            return textureData;
         }
-
-        // Load the texture
-        Texture texture = LoadTexture(path.c_str());
-
-        // Error handling
-        if (texture.id == 0) {
-            std::cerr << "Failed to load texture " << path << std::endl;
+        catch (const std::exception& e) {
+            std::cerr << "Exception in GetTexture: " << e.what() << std::endl;
             TextureData emptyData = {0};
             return emptyData;
         }
-
-    std::cout << "Loaded " << path << " from Disk" << std::endl;
-    TextureData textureData;
-    textureData.texture = texture;
-    textureData.width = texture.width;
-    textureData.height = texture.height;
-    
-    textures[path] = textureData;
-    textureReferences[path] = 1;
-    return textureData;
+        catch (...) {
+            std::cerr << "Unknown exception in GetTexture" << std::endl;
+            TextureData emptyData = {0};
+            return emptyData;
+        }
     }
 
     void UnloadAllTextures() {

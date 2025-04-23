@@ -15,6 +15,7 @@
 class Level : public Scene {
 public:
     Level();
+    Level(int starting_wave);
     ~Level();
 
     void Begin() override;
@@ -26,6 +27,7 @@ private:
     // Game state
     bool game_ongoing;
     bool is_paused;
+    bool should_exit_to_menu; //pause flag
     
     // Camera
     Camera2D camera_view;

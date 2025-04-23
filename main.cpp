@@ -7,6 +7,7 @@
 #include "leaderboard_scene.cpp"
 #include "level.cpp"
 
+#include "SaveSystem.hpp"
 #include "scene_manager.hpp"
 #include "title_scene-h.hpp"
 #include "main_menu_scene-h.hpp"
@@ -20,7 +21,7 @@
 int main() {
     InitAudioDevice();
 
-    InitWindow(1280, 720, "Final Project Mesa Reyes");
+    InitWindow(1280, 720, "Final Project Mesa Reyes Ruiz");
     SetTargetFPS(60);
 
     SceneManager scene_manager;
@@ -43,7 +44,7 @@ int main() {
     LeaderboardScene leaderboard_scene;
     leaderboard_scene.SetSceneManager(&scene_manager);
 
-    Level level_scene;
+    Level level_scene(1);
     level_scene.SetSceneManager(&scene_manager);
 
     scene_manager.RegisterScene(&title_scene, 0);

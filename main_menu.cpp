@@ -1,5 +1,6 @@
 #include "main_menu_scene-h.hpp"
 #include "scene_manager.hpp"
+#include "SaveSystem.hpp"
 #include <iostream>
 
 // MenuButton constructor implementation
@@ -37,97 +38,222 @@ void MainMenu::InitializeButtons() {
     }
     buttons.clear();
     
-    // Start Button
-    buttons.push_back(new MenuButton(
-        {570, 250, 200, 50},
-        "Start",
-        RED, 
-        MAROON, 
-        WHITE, 
-        [this]() { 
-            SceneManager* sceneManager = GetSceneManager();
-            if (sceneManager != nullptr) {
-                std::cout << "Attempting to switch to game scene" << std::endl;
-                sceneManager->SwitchScene(6);
-                // exit flag
-                sceneManager->CancelExit();
+    // Check if save file exists
+    bool has_save = SaveSystem::GetInstance()->HasSaveFile();
+    
+    // If save exists, add Continue button
+    if (has_save) {
+        buttons.push_back(new MenuButton(
+            {570, 250, 200, 50},
+            "Continue",
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    // Load saved wave
+                    int saved_wave = SaveSystem::GetInstance()->LoadWave();
+                    
+                    // Create a Level scene with the saved wave
+                    Level* level_scene = new Level(saved_wave);
+                    level_scene->SetSceneManager(sceneManager);
+                    
+                    // Register this new level scene
+                    sceneManager->UnregisterScene(6); // Remove old level scene
+                    sceneManager->RegisterScene(level_scene, 6); // Add new one
+                    
+                    std::cout << "Continuing from wave " << saved_wave << std::endl;
+                    sceneManager->SwitchScene(6);
+                    sceneManager->CancelExit();
+                }
             }
-        }
-    ));
+        ));
+        
+        // New Game button
+        buttons.push_back(new MenuButton(
+            {570, 325, 200, 50},
+            "New Game",
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    // Create a Level scene with wave 1
+                    Level* level_scene = new Level(1);
+                    level_scene->SetSceneManager(sceneManager);
+                    
+                    // Register this new level scene
+                    sceneManager->UnregisterScene(6); // Remove old level scene
+                    sceneManager->RegisterScene(level_scene, 6); // Add new one
+                    
+                    std::cout << "Starting new game at wave 1" << std::endl;
+                    sceneManager->SwitchScene(6);
+                    sceneManager->CancelExit();
+                }
+            }
+        ));
+        
+        // Add remaining buttons with shifted positions
+        buttons.push_back(new MenuButton(
+            {570, 400, 200, 50},
+            "Settings", 
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    std::cout << "Attempting to switch to settings scene" << std::endl;
+                    sceneManager->SwitchScene(3);
+                    sceneManager->CancelExit();
+                }
+            }
+        ));
 
-    // Settings Button
-    buttons.push_back(new MenuButton(
-        {570, 325, 200, 50},
-        "Settings", 
-        RED, 
-        MAROON, 
-        WHITE, 
-        [this]() { 
-            SceneManager* sceneManager = GetSceneManager();
-            if (sceneManager != nullptr) {
-                std::cout << "Attempting to switch to settings scene" << std::endl;
-                sceneManager->SwitchScene(3);
-                // exit flag
-                sceneManager->CancelExit();
+        buttons.push_back(new MenuButton(
+            {570, 475, 200, 50},
+            "Leaderboards", 
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    std::cout << "Attempting to switch to Leaderboards scene" << std::endl;
+                    sceneManager->SwitchScene(5);
+                    sceneManager->CancelExit();
+                }
             }
-        }
-    ));
+        ));
 
-    // Achievements Button
-    buttons.push_back(new MenuButton(
-        {570, 400, 200, 50},
-        "Leaderboards", 
-        RED, 
-        MAROON, 
-        WHITE, 
-        [this]() { 
-            SceneManager* sceneManager = GetSceneManager();
-            if (sceneManager != nullptr) {
-                std::cout << "Attempting to switch to Leaderboards scene" << std::endl;
-                sceneManager->SwitchScene(5);
-                // exit flag
-                sceneManager->CancelExit();
+        buttons.push_back(new MenuButton(
+            {570, 550, 200, 50},
+            "Exit Game", 
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    sceneManager->RequestGameExit();
+                }
             }
-        }
-    ));
+        ));
+    } 
+    else {
+        // Original button layout without Continue
+        buttons.push_back(new MenuButton(
+            {570, 250, 200, 50},
+            "Start",
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    std::cout << "Attempting to switch to game scene" << std::endl;
+                    sceneManager->SwitchScene(6);
+                    sceneManager->CancelExit();
+                }
+            }
+        ));
 
-    // Exit Button
-    buttons.push_back(new MenuButton(
-        {570, 475, 200, 50},
-        "Exit Game", 
-        RED, 
-        MAROON, 
-        WHITE, 
-        [this]() { 
-            SceneManager* sceneManager = GetSceneManager();
-            if (sceneManager != nullptr) {
-                sceneManager->RequestGameExit();
-                //add ways to save game state stuff here
+        buttons.push_back(new MenuButton(
+            {570, 325, 200, 50},
+            "Settings", 
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    std::cout << "Attempting to switch to settings scene" << std::endl;
+                    sceneManager->SwitchScene(3);
+                    sceneManager->CancelExit();
+                }
             }
-        }
-    ));
+        ));
+
+        buttons.push_back(new MenuButton(
+            {570, 400, 200, 50},
+            "Leaderboards", 
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    std::cout << "Attempting to switch to Leaderboards scene" << std::endl;
+                    sceneManager->SwitchScene(5);
+                    sceneManager->CancelExit();
+                }
+            }
+        ));
+
+        buttons.push_back(new MenuButton(
+            {570, 475, 200, 50},
+            "Exit Game", 
+            RED, 
+            MAROON, 
+            WHITE, 
+            [this]() { 
+                SceneManager* sceneManager = GetSceneManager();
+                if (sceneManager != nullptr) {
+                    sceneManager->RequestGameExit();
+                }
+            }
+        ));
+    }
 }
 
 void MainMenu::Begin() {
+    std::cout << "MainMenu::Begin() starting" << std::endl;
     
+    // Make sure buttons are initialized
     if (buttons.empty()) {
         InitializeButtons();
     }
 
-    if (!IsMusicReady(menu_theme)) {
-        menu_theme = LoadMusicStream("menu_theme.ogg");
-    }
-    
-    if (IsMusicReady(menu_theme)) {
-        musicLoaded = true;
-        AudioManager::GetInstance()->SetCurrentMusic(menu_theme);
-        PlayMusicStream(menu_theme);
-    } else {
-        std::cerr << "Failed to load menu theme music" << std::endl;
+    // Safely load music
+    try {
+        std::cout << "Checking if menu theme is already loaded" << std::endl;
+        if (menu_theme.ctxData == nullptr) {
+            std::cout << "Loading menu theme music" << std::endl;
+            menu_theme = LoadMusicStream("menu_theme.ogg");
+        }
+        
+        if (menu_theme.ctxData != nullptr) {
+            std::cout << "Menu theme loaded successfully" << std::endl;
+            musicLoaded = true;
+            AudioManager::GetInstance()->SetCurrentMusic(menu_theme);
+            PlayMusicStream(menu_theme);
+        } else {
+            std::cerr << "Failed to load menu theme music" << std::endl;
+            musicLoaded = false;
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Exception loading music: " << e.what() << std::endl;
+        musicLoaded = false;
+    } catch (...) {
+        std::cerr << "Unknown exception loading music" << std::endl;
+        musicLoaded = false;
     }
 
-    TextureData backgroundTextureData = ResourceManager::GetInstance()->GetTexture("back_cave.png");
-    backgroundTexture = backgroundTextureData.texture;
+    // Safely load background texture
+    try {
+        std::cout << "Loading background texture" << std::endl;
+        TextureData backgroundTextureData = ResourceManager::GetInstance()->GetTexture("back_cave.png");
+        backgroundTexture = backgroundTextureData.texture;
+        std::cout << "Background texture loaded, ID: " << backgroundTexture.id << std::endl;
+    } catch (const std::exception& e) {
+        std::cerr << "Exception loading background: " << e.what() << std::endl;
+    } catch (...) {
+        std::cerr << "Unknown exception loading background" << std::endl;
+    }
+    
+    std::cout << "MainMenu::Begin() completed" << std::endl;
 }
 
 void MainMenu::End() {
@@ -151,11 +277,15 @@ MainMenu::~MainMenu() {
 void MainMenu::Update() {
     Vector2 mousePoint = GetMousePosition();
 
+    // Safely iterate through buttons
     for (auto& button : buttons) {
-        button->HandleClick(mousePoint);
+        if (button != nullptr) {
+            button->HandleClick(mousePoint);
+        }
     }
 
-    if (musicLoaded && IsMusicReady(menu_theme)) {
+    // Safely update music
+    if (musicLoaded && menu_theme.ctxData != nullptr) {
         UpdateMusicStream(menu_theme);
 
         if (!IsMusicStreamPlaying(menu_theme)) {
@@ -180,11 +310,17 @@ void MenuButton::Draw()
 
 void MainMenu::Draw() {
     ClearBackground(DARKGRAY);
-    DrawTexturePro(backgroundTexture, {0, 0, 2000, 2000}, {0,0,1280,720}, {0,0},  0.0f,  WHITE);
+    
+    // Only draw the background if the texture is valid
+    if (backgroundTexture.id > 0) {
+        DrawTexturePro(backgroundTexture, {0, 0, 2000, 2000}, {0,0,1280,720}, {0,0}, 0.0f, WHITE);
+    }
 
     DrawText("MAIN MENU", 450, 100, 80, WHITE);
 
     for (const auto& button : buttons) {
-        button->Draw();
+        if (button != nullptr) {
+            button->Draw();
+        }
     }
 }
