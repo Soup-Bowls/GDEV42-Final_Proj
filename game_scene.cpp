@@ -1,5 +1,7 @@
 #include "game_scene-h.hpp"
 #include "scene_manager.hpp"
+#include "highscore.hpp"
+#include "name_entry_scene-h.hpp"
 #include <iostream>
 #include <fstream>
 #include <vector>
