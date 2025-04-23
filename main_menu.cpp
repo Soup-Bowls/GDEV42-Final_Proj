@@ -48,7 +48,7 @@ void MainMenu::InitializeButtons() {
             SceneManager* sceneManager = GetSceneManager();
             if (sceneManager != nullptr) {
                 std::cout << "Attempting to switch to game scene" << std::endl;
-                sceneManager->SwitchScene(2);
+                sceneManager->SwitchScene(6);
                 // exit flag
                 sceneManager->CancelExit();
             }

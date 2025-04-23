@@ -3,46 +3,56 @@
 
 #include <raylib.h>
 #include <raymath.h>
-#include <cstdlib>
 #include <vector>
 #include <string>
 #include "scene_manager.hpp"
-
-class TileMap;
-class Player;
-class Enemy;
+#include "Player.hpp"
+#include "Bee.hpp"
+#include "Ghost.hpp"
+#include "Slime.hpp"
+#include "TileMap.hpp"
 
 class Level : public Scene {
 public:
     Level();
     ~Level();
-    
+
     void Begin() override;
     void End() override;
     void Update() override;
     void Draw() override;
-    
-    void MoveCamera(Camera2D* cam, Player* player, float delta_time);
-    
+
 private:
-    static const int WINDOW_WIDTH = 1280;
-    static const int WINDOW_HEIGHT = 720;
+    // Game state
+    bool game_ongoing;
     
+    // Camera
+    Camera2D camera_view;
     Rectangle camera_window;
     float cam_drift;
-    float cam_zoom;
-    bool zoom_in;
-    
-    bool game_ongoing;
-    bool enemy_lose;
-    
-    TileMap* map;
-    Player* player;
-    std::vector<Enemy> enemies;
-    
-    Camera2D camera_view;
 
-    bool testing_mode = false;
+    // Game entities
+    Player* player;
+    std::vector<BaseEnemy*> enemies;
+    TileMap map;
+    
+    // Wave system
+    int current_wave;
+    int base_wave_points;
+    float wave_timer;
+    float wave_delay;
+    bool wave_cleared;
+    
+    // Audio
+    Music game_music;
+    bool music_loaded;
+
+    // Helper methods
+    void MoveCamera(float delta_time);
+    void SpawnWave(int wave_num);
+    void CheckWaveStatus();
+    void HandleCollisions();
+    void CheckGameStatus();
 };
 
-#endif 
+#endif
