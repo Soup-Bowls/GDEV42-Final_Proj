@@ -6,7 +6,6 @@
 #include "death_scene.cpp"
 #include "leaderboard_scene.cpp"
 #include "level.cpp"
-#include "name_entry_scene.cpp"
 
 #include "scene_manager.hpp"
 #include "title_scene-h.hpp"
@@ -16,7 +15,6 @@
 #include "death_scene-h.hpp"
 #include "leaderboard_scene-h.hpp"
 #include "level-h.hpp"
-#include "name_entry_scene-h.hpp"
 #include <iostream>
 
 int main() {
@@ -48,9 +46,6 @@ int main() {
     Level level_scene;
     level_scene.SetSceneManager(&scene_manager);
 
-    NameEntryScene name_entry_scene;
-    name_entry_scene.SetSceneManager(&scene_manager);
-
     scene_manager.RegisterScene(&title_scene, 0);
     scene_manager.RegisterScene(&main_menu_scene, 1);
     scene_manager.RegisterScene(&game_scene, 2);
@@ -58,7 +53,6 @@ int main() {
     scene_manager.RegisterScene(&death_scene, 4);
     scene_manager.RegisterScene(&leaderboard_scene, 5);
     scene_manager.RegisterScene(&level_scene, 6);
-    scene_manager.RegisterScene(&name_entry_scene, 7);
 
     scene_manager.SwitchScene(0);
 
