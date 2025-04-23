@@ -3,6 +3,7 @@
 
 #include "scene_manager.hpp"
 #include "main_menu_scene-h.hpp"
+#include "HighScore.hpp"
 #include <raylib.h>
 #include <vector>
 
@@ -20,8 +21,8 @@ private:
     Music menu_theme = {0};
     bool musicLoaded = false;
     void UpdateVolumes();
-    int Highscore;
+    
+    HighScoreManager highScoreManager;
 };
-
 
 #endif
