@@ -20,6 +20,8 @@ public:
 private:
     // Structures
 
+    HighScoreManager highScoreManager;
+
     struct Screen {
         const float window_width = 800;
         const float window_height = 600;
