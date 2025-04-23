@@ -125,10 +125,24 @@ void GameScene::Update() {
     std::cout << "GameScene::Update() - CALLED" << std::endl;
     
     if(player.HP == 0) {
+    if(highScoreManager.IsHighScore(gamePoint)) {
+        if(GetSceneManager() != nullptr) {
+            NameEntryScene* nameEntryScene = 
+                dynamic_cast<NameEntryScene*>(GetSceneManager()->GetSceneByID(7)); // Assuming ID 7 for name entry scene
+            
+            if(nameEntryScene) {
+                nameEntryScene->SetPlayerScore(gamePoint);
+                GetSceneManager()->SwitchScene(7); // Switch to name entry scene
+            } else {
+                GetSceneManager()->SwitchScene(4);
+            }
+        }
+    } else {
         if(GetSceneManager() != nullptr) {
             GetSceneManager()->SwitchScene(4);
         }
-    } 
+    }
+}
 
     if (musicLoaded && IsMusicReady(gameSceneMusic)) {
         UpdateMusicStream(gameSceneMusic);
@@ -347,7 +361,7 @@ if (IsKeyDown(KEY_D)) {
     }
 
     // heart
-    if (player.HP > 0) {
+    if(player.HP > 0) {
         int heartFrameIndex = (((player.HP-.1) / 70.0f) * (heartTexture.width / heartFrameWidth));
         if (heartFrameIndex >= heartTexture.width / heartFrameWidth) {
             heartFrameIndex = (heartTexture.width / heartFrameWidth) - 1; 
