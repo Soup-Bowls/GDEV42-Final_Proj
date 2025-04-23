@@ -25,6 +25,7 @@ public:
 private:
     // Game state
     bool game_ongoing;
+    bool is_paused;
     
     // Camera
     Camera2D camera_view;
@@ -47,12 +48,20 @@ private:
     Music game_music;
     bool music_loaded;
 
+    // Pause menu
+    Rectangle continue_button;
+    Rectangle main_menu_button;
+    bool continue_hover;
+    bool main_menu_hover;
+
     // Helper methods
     void MoveCamera(float delta_time);
     void SpawnWave(int wave_num);
     void CheckWaveStatus();
     void HandleCollisions();
     void CheckGameStatus();
+    void HandlePauseMenu();
+    void DrawPauseMenu();
 };
 
 #endif

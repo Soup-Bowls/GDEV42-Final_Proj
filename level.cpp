@@ -21,6 +21,7 @@ const float FPS(60.0f);
 
 Level::Level() : 
     game_ongoing(true),
+    is_paused(false),
     cam_drift(2.0f),
     current_wave(1),
     base_wave_points(5),
@@ -28,12 +29,18 @@ Level::Level() :
     wave_delay(2.0f),
     wave_cleared(false),
     player(nullptr),
-    music_loaded(false)
+    music_loaded(false),
+    continue_hover(false),
+    main_menu_hover(false)
 {
     // Initialize camera
     camera_view = {0};
     camera_view.offset = {WINDOW_WIDTH / 2, WINDOW_HEIGHT / 2};
     camera_view.zoom = 2.0f;
+    
+    // Initialize pause menu buttons
+    continue_button = { WINDOW_WIDTH/2 - 100, WINDOW_HEIGHT/2 - 60, 200, 50 };
+    main_menu_button = { WINDOW_WIDTH/2 - 100, WINDOW_HEIGHT/2 + 10, 200, 50 };
 }
 
 Level::~Level() {
@@ -210,15 +217,46 @@ void Level::CheckGameStatus() {
     }
 }
 
+void Level::HandlePauseMenu() {
+    Vector2 mouse_pos = GetMousePosition();
+    
+    // Check button hover states
+    continue_hover = CheckCollisionPointRec(mouse_pos, continue_button);
+    main_menu_hover = CheckCollisionPointRec(mouse_pos, main_menu_button);
+    
+    // Handle button clicks
+    if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON)) {
+        if (continue_hover) {
+            is_paused = false;
+        } else if (main_menu_hover) {
+            SceneManager* sceneManager = GetSceneManager();
+            if (sceneManager) {
+                sceneManager->SwitchScene(1); // Main menu scene
+            }
+        }
+    }
+}
+
 void Level::Update() {
     float delta_time = GetFrameTime();
     
-    // Update music
+    // Check for pause toggle
+    if (IsKeyPressed(KEY_P)) {
+        is_paused = !is_paused;
+    }
+    
+    // Update music regardless of pause state
     if (music_loaded && IsMusicReady(game_music)) {
         UpdateMusicStream(game_music);
         if (!IsMusicStreamPlaying(game_music)) {
             PlayMusicStream(game_music);
         }
+    }
+
+    if (is_paused) {
+        // Handle pause menu interaction
+        HandlePauseMenu();
+        return; // Skip the rest of the updates when paused
     }
 
     if (game_ongoing) {
@@ -244,28 +282,44 @@ void Level::Update() {
         // Update camera
         MoveCamera(delta_time);
     }
-
-    // move to death scene
-    if(player->health <= 0) {
-        if(GetSceneManager() != nullptr) {
-            GetSceneManager()->SwitchScene(4);
-        }
-    } 
     
-    // Check for pause or exit
+    // Check for exit
     if (IsKeyPressed(KEY_ESCAPE)) {
-        SceneManager* sceneManager = GetSceneManager();
-        if (sceneManager) {
-            sceneManager->SwitchScene(1); // Main menu scene
-        }
+        is_paused = true; // Pause instead of directly exiting
     }
 }
 
+void Level::DrawPauseMenu() {
+    // Draw semi-transparent overlay
+    DrawRectangle(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, Fade(WHITE, 0.7f));
+    
+    // Draw pause title
+    DrawText("PAUSED", WINDOW_WIDTH/2 - MeasureText("PAUSED", 60)/2, WINDOW_HEIGHT/2 - 150, 60, MAROON);
+    
+    // Draw continue button
+    Color continue_color = continue_hover ? MAROON : RED;
+    DrawRectangleRec(continue_button, continue_color);
+    DrawRectangleLinesEx(continue_button, 2, MAROON);
+    DrawText("CONTINUE", 
+             continue_button.x + continue_button.width/2 - MeasureText("CONTINUE", 20)/2, 
+             continue_button.y + continue_button.height/2 - 10, 
+             20, WHITE);
+    
+    // Draw main menu button
+    Color menu_color = main_menu_hover ? MAROON : RED;
+    DrawRectangleRec(main_menu_button, menu_color);
+    DrawRectangleLinesEx(main_menu_button, 2, MAROON);
+    DrawText("MAIN MENU", 
+             main_menu_button.x + main_menu_button.width/2 - MeasureText("MAIN MENU", 20)/2, 
+             main_menu_button.y + main_menu_button.height/2 - 10, 
+             20, WHITE);
+}
+
 void Level::Draw() {
+    ClearBackground(BLACK);
     
     if (game_ongoing) {
         BeginMode2D(camera_view);
-        ClearBackground(BLACK);
 
         // Draw world
         map.DrawTilemap();
@@ -286,9 +340,15 @@ void Level::Draw() {
         DrawText(TextFormat("Health: %d", player->health), 10, 10, 30, WHITE);
         DrawText(TextFormat("Wave: %d", current_wave), 10, 50, 30, YELLOW);
         DrawText(TextFormat("Position: %.0f %.0f", player->position.x, player->position.y), 10, 80, 30, YELLOW);
+        
+        // Draw pause indicator
+        DrawText("Press P to pause", WINDOW_WIDTH - 200, 10, 20, WHITE);
+        
+        // Draw pause menu if game is paused
+        if (is_paused) {
+            DrawPauseMenu();
+        }
     } else {
-        ClearBackground(BLACK);
         DrawText("GAME OVER", WINDOW_WIDTH / 4, WINDOW_HEIGHT / 2 - 25, 100, RED);
     }
-    
 }
