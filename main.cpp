@@ -20,7 +20,7 @@
 int main() {
     InitAudioDevice();
 
-    InitWindow(1280, 720, "Final Project Mesa Reyes");
+    InitWindow(1280, 720, "Final Project Mesa Reyes Ruiz");
     SetTargetFPS(60);
 
     SceneManager scene_manager;
