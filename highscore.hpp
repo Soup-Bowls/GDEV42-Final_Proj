@@ -17,56 +17,74 @@ struct HighScoreEntry {
         : playerName(name), score(scoreValue) {}
         
     bool operator<(const HighScoreEntry& other) const {
-        return score > other.score;
+        return score > other.score; // Sort in descending order
     }
 };
 
 class HighScoreManager {
 private:
-    int highScore;
+    std::vector<HighScoreEntry> highScores;
     std::string fileName;
     
 public:
-    HighScoreManager(const std::string& file = "highscore.dat") 
-        : highScore(0), fileName(file) {
-        LoadHighScore();
+    HighScoreManager(const std::string& file = "highscores.dat") 
+        : fileName(file) {
+        LoadHighScores();
     }
     
-    void LoadHighScore() {
+    void LoadHighScores() {
+        highScores.clear();
         std::ifstream file(fileName);
         if (file.is_open()) {
-            file >> highScore;
+            std::string name;
+            int score;
+            while (file >> name >> score) {
+                highScores.push_back(HighScoreEntry(name, score));
+            }
             file.close();
-            std::cout << "Loaded high score: " << highScore << std::endl;
+            std::sort(highScores.begin(), highScores.end()); // Sort by score (descending)
+            std::cout << "Loaded " << highScores.size() << " high scores" << std::endl;
         } else {
-            std::cout << "No high score file found. Starting with 0." << std::endl;
-            highScore = 0;
+            std::cout << "No high score file found. Starting with empty list." << std::endl;
         }
     }
     
-    void SaveHighScore() {
+    void SaveHighScores() {
         std::ofstream file(fileName);
         if (file.is_open()) {
-            file << highScore;
+            for (const auto& entry : highScores) {
+                file << entry.playerName << " " << entry.score << std::endl;
+            }
             file.close();
-            std::cout << "Saved high score: " << highScore << std::endl;
+            std::cout << "Saved " << highScores.size() << " high scores" << std::endl;
         } else {
-            std::cerr << "Error: Could not save high score to file." << std::endl;
+            std::cerr << "Error: Could not save high scores to file." << std::endl;
         }
     }
     
     bool IsHighScore(int score) const {
-        return score > highScore;
-    }
-    
-    void UpdateHighScore(int score) {
-        if (score > highScore) {
-            highScore = score;
-            SaveHighScore();
+        if (highScores.size() < MAX_HIGH_SCORES) {
+            return true; // Always a high score if we don't have MAX_HIGH_SCORES yet
         }
+        
+        return score > highScores.back().score;
     }
     
-    int GetHighScore() const {
-        return highScore;
+    void AddHighScore(const std::string& name, int score) {
+        highScores.push_back(HighScoreEntry(name, score));
+        std::sort(highScores.begin(), highScores.end()); // Sort by score (descending)
+        
+        // Keep only the top MAX_HIGH_SCORES
+        if (highScores.size() > MAX_HIGH_SCORES) {
+            highScores.resize(MAX_HIGH_SCORES);
+        }
+        
+        SaveHighScores();
+    }
+    
+    const std::vector<HighScoreEntry>& GetHighScores() const {
+        return highScores;
     }
 };
+
+#endif // HIGH_SCORE_HPP
