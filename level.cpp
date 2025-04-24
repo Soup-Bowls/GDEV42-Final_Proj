@@ -10,6 +10,7 @@
 #include "BeeStateMachine.cpp"
 #include "slimeStateMachine.cpp"
 #include "GhostStateMachine.cpp"
+#include "highscore.hpp"
 #include "projectile.cpp"
 #include "TileMap.cpp"
 
