@@ -3,7 +3,7 @@
 
 #include "scene_manager.hpp"
 #include "main_menu_scene-h.hpp"
-#include "HighScore.hpp"
+#include "highscore.hpp"
 #include <raylib.h>
 #include <vector>
 
