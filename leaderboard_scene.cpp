@@ -1,6 +1,6 @@
 #include "leaderboard_scene-h.hpp"
 #include "scene_manager.hpp"
-#include "HighScore.hpp"
+#include "highscore.hpp"
 #include <iostream>
 #include <fstream>
 
